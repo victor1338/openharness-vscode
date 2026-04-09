@@ -1,0 +1,138 @@
+{
+  "name": "openharness-vscode",
+  "displayName": "OpenHarness",
+  "description": "AI Agent Harness for VS Code — powered by OpenHarness",
+  "version": "0.1.0",
+  "publisher": "openharness",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Programming Languages"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "openharness.startSession",
+        "title": "OpenHarness: Start Agent Session",
+        "icon": "$(play)"
+      },
+      {
+        "command": "openharness.stopSession",
+        "title": "OpenHarness: Stop Agent Session",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "openharness.sendMessage",
+        "title": "OpenHarness: Send Message"
+      },
+      {
+        "command": "openharness.clearChat",
+        "title": "OpenHarness: Clear Chat"
+      },
+      {
+        "command": "openharness.openPanel",
+        "title": "OpenHarness: Open Chat Panel",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "openharness.configureAPI",
+        "title": "OpenHarness: Configure API Provider",
+        "icon": "$(key)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "openharness",
+          "title": "OpenHarness",
+          "icon": "$(hubot)"
+        }
+      ]
+    },
+    "views": {
+      "openharness": [
+        {
+          "type": "webview",
+          "id": "openharness.chatView",
+          "name": "Agent Chat"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "OpenHarness",
+      "properties": {
+        "openharness.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to system Python (≥ 3.10) used to create the isolated venv. The extension manages its own virtual environment automatically."
+        },
+        "openharness.model": {
+          "type": "string",
+          "default": "sonnet",
+          "description": "Default model alias or full model name."
+        },
+        "openharness.maxTurns": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum agent turns per message."
+        },
+        "openharness.permissionMode": {
+          "type": "string",
+          "enum": [
+            "default",
+            "permissive",
+            "strict"
+          ],
+          "default": "default",
+          "description": "Tool permission mode."
+        },
+        "openharness.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Custom API base URL (for OpenAI-compatible endpoints, OpenRouter, etc). Leave blank for default."
+        },
+        "openharness.apiFormat": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "copilot"
+          ],
+          "default": "anthropic",
+          "description": "API backend format. Use 'anthropic' for Claude, 'openai' for OpenAI/compatible providers, 'copilot' for GitHub Copilot."
+        },
+        "openharness.profile": {
+          "type": "string",
+          "default": "",
+          "description": "Provider profile name (leave blank for default)."
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "openharness.openPanel",
+        "key": "ctrl+shift+h",
+        "mac": "cmd+shift+h"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "npx @vscode/vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  }
+}
