@@ -8,14 +8,14 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { execFile } from 'child_process';
-import { BackendManager, BackendOptions } from './backend';
+import { BackendOptions } from './backend';
 import { ChatViewProvider } from './chatViewProvider';
+import { SettingsPanel } from './settingsPanel';
 import { StatusBar } from './statusBar';
 
 // Secret storage keys
 const SECRET_API_KEY = 'openharness.apiKey';
 
-let backend: BackendManager;
 let statusBar: StatusBar;
 let chatProvider: ChatViewProvider;
 let outputChannel: vscode.OutputChannel;
@@ -24,9 +24,10 @@ let extensionContext: vscode.ExtensionContext;
 export function activate(context: vscode.ExtensionContext) {
   extensionContext = context;
   outputChannel = vscode.window.createOutputChannel('OpenHarness');
-  backend = new BackendManager(outputChannel);
-  statusBar = new StatusBar(backend);
-  chatProvider = new ChatViewProvider(context.extensionUri, backend);
+  statusBar = new StatusBar();
+  chatProvider = new ChatViewProvider(context.extensionUri, context, outputChannel);
+  chatProvider.setStatusBar(statusBar);
+  chatProvider.setBackendFactory(buildBackendOptions);
 
   // Register sidebar webview
   context.subscriptions.push(
@@ -42,20 +43,31 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('openharness.startSession', startSession),
     vscode.commands.registerCommand('openharness.stopSession', stopSession),
+    vscode.commands.registerCommand('openharness.interruptAgent', interruptAgent),
     vscode.commands.registerCommand('openharness.sendMessage', sendMessage),
     vscode.commands.registerCommand('openharness.clearChat', clearChat),
+    vscode.commands.registerCommand('openharness.newChat', () => {
+      chatProvider.postMessage({ type: 'triggerNewChat' });
+    }),
     vscode.commands.registerCommand('openharness.openPanel', openPanel),
     vscode.commands.registerCommand('openharness.configureAPI', configureAPI),
+    vscode.commands.registerCommand('openharness.switchAPI', switchAPI),
+    vscode.commands.registerCommand('openharness.openSettings', () => {
+      SettingsPanel.open(context.extensionUri, context.secrets);
+    }),
   );
 
   context.subscriptions.push(statusBar);
-  context.subscriptions.push({ dispose: () => backend.dispose() });
+  context.subscriptions.push({ dispose: () => chatProvider.dispose() });
 
   outputChannel.appendLine('[OpenHarness] Extension activated.');
+
+  // Auto-start session on activation
+  startSession();
 }
 
 export function deactivate() {
-  backend?.stop();
+  chatProvider?.dispose();
 }
 
 // ── Python venv + OpenHarness auto-install ───────────────────────────────
@@ -333,6 +345,51 @@ const PROVIDERS: ProviderOption[] = [
   },
 ];
 
+// ── API Profile Management ───────────────────────────────────────────────
+
+interface ApiProfile {
+  name: string;
+  apiFormat: string;
+  baseUrl: string;
+  model: string;
+}
+
+function getSavedProfiles(): ApiProfile[] {
+  const cfg = vscode.workspace.getConfiguration('openharness');
+  return cfg.get<ApiProfile[]>('apiProfiles', []);
+}
+
+async function saveProfile(profile: ApiProfile): Promise<void> {
+  const cfg = vscode.workspace.getConfiguration('openharness');
+  const profiles = getSavedProfiles();
+  const existingIdx = profiles.findIndex(p => p.name === profile.name);
+  if (existingIdx >= 0) {
+    profiles[existingIdx] = profile;
+  } else {
+    profiles.push(profile);
+  }
+  await cfg.update('apiProfiles', profiles, vscode.ConfigurationTarget.Global);
+}
+
+async function activateProfile(profile: ApiProfile): Promise<void> {
+  const cfg = vscode.workspace.getConfiguration('openharness');
+  const target = vscode.ConfigurationTarget.Global;
+  await cfg.update('apiFormat', profile.apiFormat, target);
+  await cfg.update('baseUrl', profile.baseUrl || undefined, target);
+  await cfg.update('model', profile.model || undefined, target);
+  await cfg.update('activeApiProfile', profile.name, target);
+}
+
+async function deleteProfile(profileName: string): Promise<void> {
+  const cfg = vscode.workspace.getConfiguration('openharness');
+  const profiles = getSavedProfiles().filter(p => p.name !== profileName);
+  await cfg.update('apiProfiles', profiles, vscode.ConfigurationTarget.Global);
+  // Clear active if it was the deleted one
+  if (cfg.get<string>('activeApiProfile') === profileName) {
+    await cfg.update('activeApiProfile', '', vscode.ConfigurationTarget.Global);
+  }
+}
+
 async function configureAPI() {
   // Step 1: Pick provider
   const picked = await vscode.window.showQuickPick(
@@ -353,22 +410,20 @@ async function configureAPI() {
 
   // Step 2: API Key (skip for Copilot/OAuth)
   if (provider.envVar) {
-    const existingKey = await extensionContext.secrets.get(SECRET_API_KEY);
     const apiKey = await vscode.window.showInputBox({
       title: `${picked.label} — API Key`,
       prompt: `Enter your API key (stored securely in VS Code secret storage)`,
       placeHolder: provider.keyPlaceholder,
       password: true,
-      value: existingKey ? '••••••••' : '',
       validateInput: (value) => {
-        if (!value || value === '••••••••') { return null; }
+        if (!value) { return null; }
         if (value.length < 8) { return 'API key seems too short'; }
         return null;
       },
     });
 
     if (apiKey === undefined) { return; } // cancelled
-    if (apiKey && apiKey !== '••••••••') {
+    if (apiKey) {
       await extensionContext.secrets.store(SECRET_API_KEY, apiKey);
       outputChannel.appendLine('[OpenHarness] API key saved to secret storage.');
     }
@@ -415,14 +470,20 @@ async function configureAPI() {
     await config.update('model', modelInput, vscode.ConfigurationTarget.Global);
   }
 
-  // Show summary
-  const summary = [
-    `Provider: ${picked.label.replace(/\$\([^)]+\)\s*/, '')}`,
-    `Format: ${provider.apiFormat}`,
-    baseUrl ? `Base URL: ${baseUrl}` : null,
-    modelInput ? `Model: ${modelInput}` : null,
-    provider.envVar ? `API Key: ••••••••` : 'Auth: OAuth',
-  ].filter(Boolean).join('\n');
+  // Step 6: Save as a named profile
+  const providerLabel = picked.label.replace(/\$\([^)]+\)\s*/, '');
+  const profileName = modelInput
+    ? `${providerLabel} (${modelInput})`
+    : providerLabel;
+
+  const profile: ApiProfile = {
+    name: profileName,
+    apiFormat: provider.apiFormat,
+    baseUrl: baseUrl || '',
+    model: modelInput || '',
+  };
+  await saveProfile(profile);
+  await config.update('activeApiProfile', profileName, vscode.ConfigurationTarget.Global);
 
   const action = await vscode.window.showInformationMessage(
     `API configured! ${picked.label.replace(/\$\([^)]+\)\s*/, '')} is ready.`,
@@ -438,24 +499,106 @@ async function configureAPI() {
   chatProvider.postMessage({ type: 'apiConfigured', provider: picked.label });
 }
 
-// ── Command implementations ──────────────────────────────────────────────
+// ── Switch API (quick pick among saved profiles) ─────────────────────────
 
-async function startSession() {
-  if (backend.isRunning) {
-    const choice = await vscode.window.showWarningMessage(
-      'An OpenHarness session is already running. Restart it?',
-      'Restart',
-      'Cancel'
+async function switchAPI() {
+  const profiles = getSavedProfiles();
+  const config = vscode.workspace.getConfiguration('openharness');
+  const activeProfile = config.get<string>('activeApiProfile', '');
+
+  if (profiles.length === 0) {
+    const action = await vscode.window.showInformationMessage(
+      'No saved API profiles. Configure one first.',
+      'Configure API'
     );
-    if (choice !== 'Restart') { return; }
-    await backend.stop();
+    if (action === 'Configure API') {
+      vscode.commands.executeCommand('openharness.configureAPI');
+    }
+    return;
   }
 
+  // Build quick pick items from saved profiles
+  const items: (vscode.QuickPickItem & { profileName?: string; action?: string })[] = profiles.map(p => ({
+    label: `${p.name === activeProfile ? '$(check) ' : ''}${p.name}`,
+    description: `${p.apiFormat}${p.model ? ' · ' + p.model : ''}${p.baseUrl ? ' · ' + p.baseUrl : ''}`,
+    profileName: p.name,
+  }));
+
+  items.push(
+    { label: '', kind: vscode.QuickPickItemKind.Separator } as any,
+    { label: '$(add) Add New Provider...', action: 'add' },
+    { label: '$(trash) Remove a Profile...', action: 'remove' },
+  );
+
+  const picked = await vscode.window.showQuickPick(items, {
+    title: 'OpenHarness — Switch API Provider',
+    placeHolder: 'Select an API provider to use',
+  });
+
+  if (!picked) { return; }
+
+  if ((picked as any).action === 'add') {
+    vscode.commands.executeCommand('openharness.configureAPI');
+    return;
+  }
+
+  if ((picked as any).action === 'remove') {
+    const removeItems = profiles.map(p => ({
+      label: p.name,
+      description: `${p.apiFormat}${p.model ? ' · ' + p.model : ''}`,
+    }));
+    const toRemove = await vscode.window.showQuickPick(removeItems, {
+      title: 'Remove API Profile',
+      placeHolder: 'Select a profile to remove',
+    });
+    if (toRemove) {
+      await deleteProfile(toRemove.label);
+      vscode.window.showInformationMessage(`Removed profile: ${toRemove.label}`);
+      chatProvider.postMessage({ type: 'apiProfilesChanged' });
+    }
+    return;
+  }
+
+  // Activate the selected profile
+  const profileName = (picked as any).profileName;
+  const profile = profiles.find(p => p.name === profileName);
+  if (profile) {
+    await activateProfile(profile);
+    vscode.window.showInformationMessage(`Switched to: ${profile.name}`);
+    chatProvider.postMessage({
+      type: 'apiSwitched',
+      profile: profile.name,
+      model: profile.model,
+      apiFormat: profile.apiFormat,
+    });
+
+    // If a session is running, ask to restart
+    if (chatProvider.getCurrentBackend()?.isRunning) {
+      const restart = await vscode.window.showInformationMessage(
+        'API provider changed. Restart the session to use the new provider?',
+        'Restart',
+        'Later'
+      );
+      if (restart === 'Restart') {
+        await chatProvider.stopCurrentSession();
+        vscode.commands.executeCommand('openharness.startSession');
+      }
+    }
+  }
+}
+
+// ── Command implementations ──────────────────────────────────────────────
+
+/**
+ * Build backend options from current configuration.
+ * Handles venv setup, API key retrieval, and config resolution.
+ * Returns null if setup fails or is cancelled.
+ */
+async function buildBackendOptions(): Promise<BackendOptions | null> {
   // Ensure Python + OpenHarness are available (auto-installs if needed)
   const venvPython = await ensureOpenHarnessInstalled();
-  if (!venvPython) { return; }
+  if (!venvPython) { return null; }
 
-  // Check if API is configured
   const config = vscode.workspace.getConfiguration('openharness');
   const apiFormat = config.get<string>('apiFormat', 'anthropic');
   const storedKey = await extensionContext.secrets.get(SECRET_API_KEY);
@@ -475,42 +618,67 @@ async function startSession() {
     );
     if (action === 'Configure API') {
       vscode.commands.executeCommand('openharness.configureAPI');
-      return;
+      return null;
     }
-    if (!action) { return; }
+    if (!action) { return null; }
   }
 
   const workspaceFolders = vscode.workspace.workspaceFolders;
   const cwd = workspaceFolders?.[0]?.uri.fsPath || process.cwd();
 
-  const options: BackendOptions = {
+  const model = config.get<string>('model') || undefined;
+  const maxTurns = config.get<number>('maxTurns');
+  outputChannel.appendLine(`[OpenHarness] Config → model=${model}, maxTurns=${maxTurns}, apiFormat=${apiFormat}`);
+
+  return {
     pythonPath: venvPython,
     cwd,
     bridgeScriptPath: path.join(extensionContext.extensionPath, 'bridge', 'openharness_vscode_bridge.py'),
-    model: config.get<string>('model') || undefined,
-    maxTurns: config.get<number>('maxTurns'),
+    model,
+    maxTurns,
     apiKey: storedKey || undefined,
     apiFormat: apiFormat || undefined,
     baseUrl: config.get<string>('baseUrl') || undefined,
     permissionMode: config.get<string>('permissionMode') || undefined,
     profile: config.get<string>('profile') || undefined,
   };
+}
 
-  backend.start(options);
-  chatProvider.postMessage({ type: 'sessionStarted' });
+async function startSession() {
+  const currentBackend = chatProvider.getCurrentBackend();
+  if (currentBackend?.isRunning) {
+    const choice = await vscode.window.showWarningMessage(
+      'This session already has a running backend. Restart it?',
+      'Restart',
+      'Cancel'
+    );
+    if (choice !== 'Restart') { return; }
+    await chatProvider.stopCurrentSession();
+  }
+
+  const options = await buildBackendOptions();
+  if (!options) { return; }
+
+  chatProvider.startCurrentSession(options);
 }
 
 async function stopSession() {
-  if (!backend.isRunning) {
+  const currentBackend = chatProvider.getCurrentBackend();
+  if (!currentBackend?.isRunning) {
     vscode.window.showInformationMessage('No OpenHarness session is running.');
     return;
   }
-  await backend.stop();
+  await chatProvider.stopCurrentSession();
   vscode.window.showInformationMessage('OpenHarness session stopped.');
 }
 
+async function interruptAgent() {
+  await chatProvider.interruptSession();
+}
+
 async function sendMessage() {
-  if (!backend.isRunning || !backend.isReady) {
+  const currentBackend = chatProvider.getCurrentBackend();
+  if (!currentBackend?.isRunning || !currentBackend.isReady) {
     vscode.window.showWarningMessage('Start an OpenHarness session first.');
     return;
   }
@@ -521,7 +689,7 @@ async function sendMessage() {
   });
 
   if (text) {
-    backend.submitMessage(text);
+    currentBackend.submitMessage(text);
   }
 }
 

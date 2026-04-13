@@ -3,17 +3,13 @@
  */
 
 import * as vscode from 'vscode';
-import { BackendManager } from './backend';
 import { BackendEvent, AppState } from './protocol';
 
 export class StatusBar {
   private statusItem: vscode.StatusBarItem;
   private modelItem: vscode.StatusBarItem;
-  private backend: BackendManager;
 
-  constructor(backend: BackendManager) {
-    this.backend = backend;
-
+  constructor() {
     this.statusItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left,
       100
@@ -27,20 +23,22 @@ export class StatusBar {
       vscode.StatusBarAlignment.Left,
       99
     );
+    this.modelItem.command = 'openharness.switchAPI';
+    this.modelItem.tooltip = 'Click to switch API provider';
     this.modelItem.show();
-
-    this.backend.on('event', (event: BackendEvent) => {
-      this.handleEvent(event);
-    });
-
-    this.backend.on('exit', () => {
-      this.statusItem.text = '$(hubot) OH: Idle';
-      this.statusItem.color = undefined;
-      this.modelItem.text = '';
-    });
   }
 
-  private handleEvent(event: BackendEvent): void {
+  handleEvent(event: BackendEvent): void {
+    this.handleEventInternal(event);
+  }
+
+  handleExit(): void {
+    this.statusItem.text = '$(hubot) OH: Idle';
+    this.statusItem.color = undefined;
+    this.modelItem.text = '';
+  }
+
+  private handleEventInternal(event: BackendEvent): void {
     switch (event.type) {
       case 'ready':
         this.statusItem.text = '$(hubot) OH: Ready';

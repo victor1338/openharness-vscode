@@ -1,10 +1,30 @@
 {
   "name": "openharness-vscode",
   "displayName": "OpenHarness",
-  "description": "AI Agent Harness for VS Code — powered by OpenHarness",
+  "description": "AI Agent Harness for VS Code — powered by OpenHarness (HKUDS/OpenHarness)",
   "version": "0.1.0",
-  "publisher": "openharness",
+  "publisher": "VicLee",
   "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/victor1338/openharness-vscode"
+  },
+  "homepage": "https://github.com/victor1338/openharness-vscode#readme",
+  "bugs": {
+    "url": "https://github.com/victor1338/openharness-vscode/issues"
+  },
+  "keywords": [
+    "openharness",
+    "ai",
+    "agent",
+    "harness",
+    "llm",
+    "anthropic",
+    "openai",
+    "copilot",
+    "chat"
+  ],
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -33,7 +53,13 @@
       },
       {
         "command": "openharness.clearChat",
-        "title": "OpenHarness: Clear Chat"
+        "title": "OpenHarness: Clear Chat",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "openharness.newChat",
+        "title": "OpenHarness: New Chat",
+        "icon": "$(add)"
       },
       {
         "command": "openharness.openPanel",
@@ -44,6 +70,16 @@
         "command": "openharness.configureAPI",
         "title": "OpenHarness: Configure API Provider",
         "icon": "$(key)"
+      },
+      {
+        "command": "openharness.switchAPI",
+        "title": "OpenHarness: Switch API Provider",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "openharness.openSettings",
+        "title": "OpenHarness: Open Settings",
+        "icon": "$(gear)"
       }
     ],
     "viewsContainers": {
@@ -111,6 +147,25 @@
           "type": "string",
           "default": "",
           "description": "Provider profile name (leave blank for default)."
+        },
+        "openharness.apiProfiles": {
+          "type": "array",
+          "default": [],
+          "description": "Saved API provider profiles for quick switching.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "apiFormat": { "type": "string" },
+              "baseUrl": { "type": "string" },
+              "model": { "type": "string" }
+            }
+          }
+        },
+        "openharness.activeApiProfile": {
+          "type": "string",
+          "default": "",
+          "description": "Name of the currently active API profile."
         }
       }
     },
@@ -120,7 +175,21 @@
         "key": "ctrl+shift+h",
         "mac": "cmd+shift+h"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "openharness.openSettings",
+          "when": "view == openharness.chatView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "openharness.clearChat",
+          "when": "view == openharness.chatView",
+          "group": "navigation@2"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

@@ -1,0 +1,657 @@
+/* OpenHarness Settings Panel Styles */
+
+:root {
+  --oh-bg: var(--vscode-editor-background);
+  --oh-fg: var(--vscode-editor-foreground);
+  --oh-border: var(--vscode-panel-border);
+  --oh-input-bg: var(--vscode-input-background);
+  --oh-input-fg: var(--vscode-input-foreground);
+  --oh-input-border: var(--vscode-input-border);
+  --oh-btn-bg: var(--vscode-button-background);
+  --oh-btn-fg: var(--vscode-button-foreground);
+  --oh-btn-hover: var(--vscode-button-hoverBackground);
+  --oh-accent: var(--vscode-focusBorder);
+  --oh-error: var(--vscode-errorForeground);
+  --oh-success: #4ec9b0;
+  --oh-muted: var(--vscode-descriptionForeground);
+  --oh-code-bg: var(--vscode-textCodeBlock-background);
+  --oh-card-bg: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--oh-fg);
+  background: var(--oh-bg);
+  margin: 0;
+}
+
+#settings-app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 24px 80px;
+}
+
+/* ── Header ───────────────────────────────────────── */
+
+#settings-header {
+  margin-bottom: 20px;
+}
+
+#settings-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  color: var(--oh-muted);
+  font-size: 13px;
+}
+
+/* ── Tabs ─────────────────────────────────────────── */
+
+#tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--oh-border);
+  margin-bottom: 16px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: var(--oh-muted);
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+  color: var(--oh-fg);
+}
+
+.tab.active {
+  color: var(--oh-fg);
+  border-bottom-color: var(--oh-accent);
+}
+
+/* ── Tab content ──────────────────────────────────── */
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ── Cards ────────────────────────────────────────── */
+
+.card {
+  background: var(--oh-card-bg);
+  border: 1px solid var(--oh-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.card h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.card h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
+
+.card-desc {
+  color: var(--oh-muted);
+  font-size: 12px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* ── Form fields ──────────────────────────────────── */
+
+.field {
+  margin-bottom: 12px;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.field input[type="text"],
+.field input[type="password"],
+.field input[type="number"],
+.field select {
+  width: 100%;
+  background: var(--oh-input-bg);
+  color: var(--oh-input-fg);
+  border: 1px solid var(--oh-input-border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  outline: none;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--oh-accent);
+}
+
+.field-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.field-row input {
+  flex: 1;
+}
+
+.hint {
+  display: block;
+  font-size: 11px;
+  color: var(--oh-muted);
+  margin-top: 3px;
+}
+
+label .hint {
+  display: inline;
+  margin: 0;
+}
+
+.separator {
+  border-top: 1px solid var(--oh-border);
+  margin: 14px 0;
+}
+
+/* ── Buttons ──────────────────────────────────────── */
+
+.btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--oh-btn-bg);
+  color: var(--oh-btn-fg);
+}
+
+.btn-primary:hover {
+  background: var(--oh-btn-hover);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--oh-fg);
+  border: 1px solid var(--oh-border);
+}
+
+.btn-secondary:hover {
+  background: var(--oh-code-bg);
+}
+
+/* ── API Key status ───────────────────────────────── */
+
+.key-status {
+  font-size: 12px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: var(--oh-code-bg);
+}
+
+.key-status.has-key {
+  border-left: 3px solid var(--oh-success);
+}
+
+.key-status.no-key {
+  border-left: 3px solid var(--oh-error);
+}
+
+/* ── Provider grid ────────────────────────────────── */
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.provider-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: var(--oh-code-bg);
+  border: 1px solid var(--oh-border);
+  border-radius: 6px;
+  color: var(--oh-fg);
+  cursor: pointer;
+  font-size: 12px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.provider-btn:hover {
+  border-color: var(--oh-accent);
+  background: var(--oh-input-bg);
+}
+
+.provider-btn.selected {
+  border-color: var(--oh-accent);
+  border-width: 2px;
+}
+
+.provider-icon {
+  font-size: 20px;
+}
+
+/* ── Tool chips ───────────────────────────────────── */
+
+.tool-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tool-chip {
+  background: var(--oh-code-bg);
+  border: 1px solid var(--oh-border);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: var(--vscode-editor-font-family);
+  color: var(--oh-muted);
+}
+
+/* ── Saved Profiles ───────────────────────────────── */
+
+.profiles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--oh-code-bg);
+  border: 1px solid var(--oh-border);
+  border-radius: 6px;
+  transition: border-color 0.15s;
+}
+
+.profile-item:hover {
+  border-color: var(--oh-accent);
+}
+
+.profile-item.profile-active {
+  border-color: var(--oh-accent);
+  border-width: 2px;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.profile-name {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-meta {
+  font-size: 11px;
+  color: var(--oh-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.profile-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--oh-success);
+  padding: 2px 6px;
+  border: 1px solid var(--oh-success);
+  border-radius: 3px;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--oh-error);
+  border: 1px solid var(--oh-error);
+  opacity: 0.6;
+}
+
+.btn-danger:hover {
+  opacity: 1;
+  background: rgba(255, 0, 0, 0.1);
+}
+
+/* ── Config grid (2-col layout) ───────────────────── */
+
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 480px) {
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Save profile row ─────────────────────────────── */
+
+.save-profile-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.save-profile-input {
+  flex: 1;
+  background: var(--oh-input-bg);
+  color: var(--oh-input-fg);
+  border: 1px solid var(--oh-input-border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  outline: none;
+}
+
+.save-profile-input:focus {
+  border-color: var(--oh-accent);
+}
+
+/* ── Card header row ──────────────────────────────── */
+
+.card-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.card-header-row h2 {
+  margin-bottom: 2px;
+}
+
+/* ── Collapsible card (details/summary) ───────────── */
+
+.collapsible-card {
+  cursor: default;
+}
+
+.collapsible-header {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--oh-muted);
+  list-style: none;
+  user-select: none;
+}
+
+.collapsible-header::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible-header::before {
+  content: '▸ ';
+  transition: transform 0.15s;
+  display: inline-block;
+}
+
+details[open] > .collapsible-header::before {
+  content: '▾ ';
+}
+
+/* ── Alias table ──────────────────────────────────── */
+
+.alias-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.alias-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--oh-border);
+}
+
+.alias-table td:first-child {
+  width: 100px;
+}
+
+.alias-table code {
+  background: var(--oh-code-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: var(--vscode-editor-font-family);
+}
+
+/* ── Info box (code snippets) ─────────────────────── */
+
+.info-box {
+  background: var(--oh-code-bg);
+  border: 1px solid var(--oh-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.info-box strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--oh-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-box pre {
+  margin: 0;
+  font-family: var(--vscode-editor-font-family);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--oh-fg);
+}
+
+/* ── Footer ───────────────────────────────────────── */
+
+#settings-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 24px;
+  background: var(--oh-bg);
+  border-top: 1px solid var(--oh-border);
+}
+
+/* ── Code in text ─────────────────────────────────── */
+
+code {
+  background: var(--oh-code-bg);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: var(--vscode-editor-font-family);
+  font-size: 12px;
+}
+
+/* ── Managed Items (skills, plugins, memory) ──────── */
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.managed-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--oh-code-bg);
+  border: 1px solid var(--oh-border);
+  border-radius: 6px;
+  transition: border-color 0.15s;
+}
+
+.managed-item:hover {
+  border-color: var(--oh-accent);
+}
+
+.managed-item-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.managed-item-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.managed-item-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.managed-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.managed-item-version {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--oh-muted);
+}
+
+.managed-item-meta {
+  font-size: 11px;
+  color: var(--oh-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.managed-item-source {
+  font-size: 10px;
+  color: var(--oh-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.managed-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+/* ── Badges ───────────────────────────────────────── */
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.badge-success {
+  color: var(--oh-success);
+  border: 1px solid var(--oh-success);
+}
+
+.badge-muted {
+  color: var(--oh-muted);
+  border: 1px solid var(--oh-border);
+}
+
+.badge-info {
+  color: var(--vscode-textLink-foreground, #3794ff);
+  border: 1px solid var(--vscode-textLink-foreground, #3794ff);
+}

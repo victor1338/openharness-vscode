@@ -2,6 +2,11 @@
 
 AI Agent Harness extension for Visual Studio Code — powered by [OpenHarness](https://github.com/HKUDS/OpenHarness).
 
+> **Attribution:** This VS Code extension is built on top of [**OpenHarness**](https://github.com/HKUDS/OpenHarness) by [HKUDS](https://github.com/HKUDS).
+> OpenHarness is an open-source Python agent harness providing tools, skills, memory, multi-agent coordination, and more.
+> The original project is licensed under the [MIT License](https://github.com/HKUDS/OpenHarness/blob/main/LICENSE).
+> We gratefully acknowledge the OpenHarness team and all its contributors.
+
 ## Features
 
 - **Sidebar Chat Panel** — Interactive chat with the OpenHarness AI agent directly in VS Code
@@ -95,6 +100,12 @@ Install the generated `.vsix` file via **Extensions → ⋯ → Install from VSI
 └──────────────────────────────┘
 ```
 
+## Acknowledgments
+
+This extension would not exist without the [OpenHarness](https://github.com/HKUDS/OpenHarness) project by [HKUDS](https://github.com/HKUDS). If you find this extension useful, please consider starring the original repository.
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
+
+This project includes code from [HKUDS/OpenHarness](https://github.com/HKUDS/OpenHarness), also licensed under MIT.

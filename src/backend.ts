@@ -30,6 +30,7 @@ export class BackendManager extends EventEmitter {
   private process: ChildProcess | null = null;
   private rl: readline.Interface | null = null;
   private _ready = false;
+  private _interrupted = false;
   private outputChannel: vscode.OutputChannel;
 
   constructor(outputChannel: vscode.OutputChannel) {
@@ -162,6 +163,20 @@ export class BackendManager extends EventEmitter {
   }
 
   /**
+   * Request selection options for a command (e.g. /model, /provider).
+   */
+  selectCommand(command: string): void {
+    this.send({ type: 'select_command', command });
+  }
+
+  /**
+   * Apply a user's selection for a command.
+   */
+  applySelectCommand(command: string, value: string): void {
+    this.send({ type: 'apply_select_command', command, value });
+  }
+
+  /**
    * Respond to a permission request.
    */
   respondPermission(requestId: string, allowed: boolean): void {
@@ -173,6 +188,13 @@ export class BackendManager extends EventEmitter {
    */
   respondQuestion(requestId: string, answer: string): void {
     this.send({ type: 'question_response', request_id: requestId, answer });
+  }
+
+  /**
+   * Cancel the currently running agent turn without killing the session.
+   */
+  cancelTurn(): void {
+    this.send({ type: 'cancel_turn' });
   }
 
   /**
@@ -196,6 +218,29 @@ export class BackendManager extends EventEmitter {
         resolve();
       });
     });
+  }
+
+  /**
+   * Interrupt the current agent turn by killing the process immediately.
+   * Unlike stop(), this doesn't attempt graceful shutdown.
+   */
+  async interrupt(): Promise<void> {
+    if (!this.isRunning) { return; }
+    this._interrupted = true;
+    this.process?.kill();
+    await new Promise<void>((resolve) => {
+      if (!this.process) { resolve(); return; }
+      this.process.on('exit', () => resolve());
+      setTimeout(() => resolve(), 3000);
+    });
+  }
+
+  get wasInterrupted(): boolean {
+    return this._interrupted;
+  }
+
+  resetInterruptFlag(): void {
+    this._interrupted = false;
   }
 
   private handleEvent(event: BackendEvent): void {

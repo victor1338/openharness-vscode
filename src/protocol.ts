@@ -12,6 +12,7 @@ export type FrontendRequestType =
   | 'list_sessions'
   | 'select_command'
   | 'apply_select_command'
+  | 'cancel_turn'
   | 'shutdown';
 
 export interface FrontendRequest {
@@ -31,6 +32,7 @@ export type BackendEventType =
   | 'state_snapshot'
   | 'tasks_snapshot'
   | 'transcript_item'
+  | 'thinking_delta'
   | 'assistant_delta'
   | 'assistant_complete'
   | 'line_complete'
@@ -88,7 +90,7 @@ export interface BackendEvent {
   tasks?: TaskSnapshot[];
   mcp_servers?: Record<string, unknown>[];
   bridge_sessions?: Record<string, unknown>[];
-  commands?: string[];
+  commands?: CommandInfo[];
   modal?: ModalRequest;
   tool_name?: string;
   tool_input?: Record<string, unknown>;
@@ -106,4 +108,22 @@ export interface ModalRequest {
   message: string;
   tool_name?: string;
   tool_input?: Record<string, unknown>;
+}
+
+export interface SelectModalRequest {
+  kind: 'select';
+  title: string;
+  command: string;
+}
+
+export interface SelectOption {
+  value: string;
+  label: string;
+  description?: string;
+  active?: boolean;
+}
+
+export interface CommandInfo {
+  name: string;
+  description: string;
 }
