@@ -2,7 +2,7 @@
   "name": "openharness-vscode",
   "displayName": "OpenHarness",
   "description": "AI Agent Harness for VS Code — powered by OpenHarness (HKUDS/OpenHarness)",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "VicLee",
   "license": "MIT",
   "icon": "media/icon.png",
