@@ -106,6 +106,7 @@ export interface ModalRequest {
   type: 'permission' | 'question';
   title: string;
   message: string;
+  reason?: string;
   tool_name?: string;
   tool_input?: Record<string, unknown>;
 }
